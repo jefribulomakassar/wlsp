@@ -15,32 +15,38 @@ SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
 ]
-SPREADSHEET_ID      = os.environ.get("SPREADSHEET_ID", "")
-SERVICE_ACCOUNT_JSON = os.environ.get("SERVICE_ACCOUNT_JSON", "")  # JSON string di env var
-SHEET_NAME          = os.environ.get("SHEET_NAME", "Registrasi")
+
+# Bug Fix #1: Dua SPREADSHEET_ID — isi keduanya di environment variable
+SPREADSHEET_ID_1     = os.environ.get("SPREADSHEET_ID", "")         # sheet utama (tetap pakai key lama)
+SPREADSHEET_ID_2     = os.environ.get("SPREADSHEET_ID_2", "")        # sheet kedua (tambahan)
+
+SERVICE_ACCOUNT_JSON = os.environ.get("SERVICE_ACCOUNT_JSON", "")   # JSON string di env var
+SHEET_NAME           = os.environ.get("SHEET_NAME", "Registrasi")
 
 HEADER = [
     "Timestamp",
     "Nama Lengkap Kaprodi",
     "Nomor HP Kaprodi",
     "Program Studi",
-    "Dosen Diusulkan",   # JSON string
-    "Judul Skema",       # JSON string
+    "Dosen Diusulkan",
+    "Judul Skema",
 ]
 
 FALLBACK_CSV = "/tmp/data_registrasi.csv"   # /tmp adalah satu-satunya writable di Vercel
 
 
-def get_sheet():
+def get_credentials():
+    """Buat credentials sekali, dipakai untuk koneksi ke kedua sheet."""
     if SERVICE_ACCOUNT_JSON:
-        # Di Vercel: credentials dari environment variable (JSON string)
         info = json.loads(SERVICE_ACCOUNT_JSON)
-        creds = Credentials.from_service_account_info(info, scopes=SCOPES)
-    else:
-        # Lokal: dari file service_account.json
-        creds = Credentials.from_service_account_file("service_account.json", scopes=SCOPES)
+        return Credentials.from_service_account_info(info, scopes=SCOPES)
+    return Credentials.from_service_account_file("service_account.json", scopes=SCOPES)
+
+
+def get_sheet(spreadsheet_id: str):
+    creds = get_credentials()
     gc = gspread.authorize(creds)
-    return gc.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
+    return gc.open_by_key(spreadsheet_id).worksheet(SHEET_NAME)
 
 
 def ensure_header(sheet):
@@ -48,15 +54,67 @@ def ensure_header(sheet):
         sheet.insert_row(HEADER, 1)
 
 
-def save_to_sheets(row: list) -> bool:
+# ── Bug Fix #2: Format kolom jadi human-readable ──────────────────────────────
+
+def format_dosen(dosen_list: list) -> str:
+    """
+    Input : [{"nama": "Andi Baso", "hp": "081234"}, {"nama": "Budi", "hp": "089876"}]
+    Output: "Andi Baso (081234) | Budi (089876)"
+    """
+    parts = []
+    for d in dosen_list:
+        nama = (d.get("nama") or "").strip()
+        hp   = (d.get("hp") or "").strip()
+        if nama and hp:
+            parts.append(f"{nama} ({hp})")
+        elif nama:
+            parts.append(nama)
+    return " | ".join(parts)
+
+
+def format_skema(skema_list: list) -> str:
+    """
+    Input : ["SKKNI Bidang TI", "SKKNI Bidang Pertanian"]
+    Output: "SKKNI Bidang TI | SKKNI Bidang Pertanian"
+    """
+    return " | ".join(s.strip() for s in skema_list if s.strip())
+
+
+# ── Simpan ke sheet (single spreadsheet) ─────────────────────────────────────
+
+def save_to_one_sheet(spreadsheet_id: str, row: list) -> bool:
+    """Simpan satu baris ke spreadsheet tertentu. Return True jika berhasil."""
+    if not spreadsheet_id:
+        logging.warning("[Google Sheets] SPREADSHEET_ID kosong, dilewati.")
+        return False
     try:
-        sheet = get_sheet()
+        sheet = get_sheet(spreadsheet_id)
         ensure_header(sheet)
         sheet.append_row(row, value_input_option="USER_ENTERED")
         return True
     except Exception as e:
-        logging.error(f"[Google Sheets] Gagal: {e}")
+        logging.error(f"[Google Sheets] Gagal ke {spreadsheet_id[:12]}...: {e}")
         return False
+
+
+def save_to_sheets(row: list) -> bool:
+    """
+    Bug Fix #1: Simpan ke DUA spreadsheet.
+    Return True jika minimal salah satu berhasil.
+    """
+    ok1 = save_to_one_sheet(SPREADSHEET_ID_1, row)
+    ok2 = save_to_one_sheet(SPREADSHEET_ID_2, row)
+
+    if ok1 and ok2:
+        logging.info("[Google Sheets] Berhasil disimpan ke kedua sheet.")
+    elif ok1:
+        logging.warning("[Google Sheets] Hanya berhasil ke sheet 1.")
+    elif ok2:
+        logging.warning("[Google Sheets] Hanya berhasil ke sheet 2.")
+    else:
+        logging.error("[Google Sheets] Gagal ke semua sheet.")
+
+    return ok1 or ok2
 
 
 def save_to_csv(row: list):
@@ -532,12 +590,18 @@ def submit():
             return jsonify({"success": False, "errors": errors}), 422
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Bug Fix #2: Format human-readable, bukan raw JSON string
         row = [
-            timestamp, nama_kaprodi, no_hp, prodi,
-            json.dumps(dosen_valid, ensure_ascii=False),
-            json.dumps(skema_valid, ensure_ascii=False),
+            timestamp,
+            nama_kaprodi,
+            no_hp,
+            prodi,
+            format_dosen(dosen_valid),   # "Andi Baso (08123) | Budi (08987)"
+            format_skema(skema_valid),   # "SKKNI Bidang TI | SKKNI Bidang Pertanian"
         ]
 
+        # Bug Fix #1: Simpan ke kedua sheet
         saved = save_to_sheets(row)
         if not saved:
             save_to_csv(row)
