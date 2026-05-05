@@ -1,4 +1,3 @@
-# index.py
 import os
 import csv
 import json
@@ -280,8 +279,7 @@ HTML = """<!DOCTYPE html>
 <div class="banner">
   <div class="banner-inner">
     <h1>Workshop Penyusunan<br/><span>Skema Kompetensi</span></h1>
-    <p>Pengisian formulir ini merupakan langkah sistematis dalam mendukung pengembangan
-    dan perluasan ruang lingkup skema sertifikasi di Universitas Bosowa.</p>
+    <p>Isi formulir ini secara lengkap dan akurat untuk mendukung pengembangan skema sertifikasi.</p>
   </div>
 </div>
 
@@ -309,7 +307,7 @@ HTML = """<!DOCTYPE html>
       <label>Program Studi <span class="req">*</span></label>
       <select id="prodi">
         <option value="">-- Pilih Program Studi --</option>
-        <optgroup label="Fakultas Pertanian &amp; Kelautan">
+        <optgroup label="Fakultas Pertanian">
           <option>Budidaya Perairan</option>
           <option>Teknologi Pangan</option>
           <option>Peternakan</option>
