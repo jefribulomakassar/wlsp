@@ -331,6 +331,30 @@ HTML = """<!DOCTYPE html>
     }
     .success-screen h2 { font-family: 'Playfair Display', serif; font-size: 22px; margin-bottom: 10px; }
     .success-screen p { font-size: 14px; color: var(--gray); }
+
+    /* WhatsApp group banner */
+    .wa-banner {
+      display: flex; align-items: center; gap: 14px;
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      text-decoration: none;
+      color: #15803d;
+      margin-bottom: 24px;
+      transition: background .2s, border-color .2s, transform .1s;
+    }
+    .wa-banner:hover { background: #dcfce7; border-color: #4ade80; transform: translateY(-1px); }
+    .wa-banner:active { transform: translateY(0); }
+    .wa-icon { width: 36px; height: 36px; flex-shrink: 0; color: #16a34a; }
+    .wa-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .wa-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: #16a34a; opacity: .7;
+    }
+    .wa-desc { font-size: 13px; font-weight: 500; color: #15803d; line-height: 1.4; }
+    .wa-desc strong { font-weight: 700; }
+    .wa-arrow { width: 18px; height: 18px; flex-shrink: 0; opacity: .5; }
   </style>
 </head>
 <body>
@@ -349,6 +373,18 @@ HTML = """<!DOCTYPE html>
   </div>
 
   <div id="formWrapper">
+    <a class="wa-banner" href="https://chat.whatsapp.com/HlANj8ZwqdbILXgD3clXOT" target="_blank" rel="noopener">
+      <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.14 1.543 5.876L.057 23.5l5.773-1.515A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.894a9.887 9.887 0 01-5.034-1.378l-.361-.214-3.427.899.915-3.342-.235-.374A9.861 9.861 0 012.106 12C2.106 6.58 6.58 2.106 12 2.106S21.894 6.58 21.894 12 17.42 21.894 12 21.894z"/>
+      </svg>
+      <div class="wa-text">
+        <span class="wa-label">Grup WhatsApp</span>
+        <span class="wa-desc">Klik untuk bergabung dengan Grup <strong>Skema Kompetensi UNIBOS</strong></span>
+      </div>
+      <svg class="wa-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
+
     <div class="section-label">Data Kaprodi</div>
 
     <div class="field">
