@@ -34,6 +34,42 @@
       padding: 0 0 60px;
     }
 
+    /* ── Closed Notice Bar ─────────────────────────────────────────────── */
+    .closed-notice {
+      background: #7f1d1d;
+      color: #fff;
+      text-align: center;
+      padding: 14px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: .01em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .closed-notice .closed-icon {
+      width: 22px; height: 22px;
+      background: rgba(255,255,255,.15);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .closed-notice .closed-sub {
+      font-weight: 400;
+      opacity: .85;
+      font-size: 12.5px;
+    }
+    .closed-notice-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
     /* ── Header Banner ─────────────────────────────────────────────────── */
     .banner {
       background: var(--navy);
@@ -81,6 +117,37 @@
       .card { margin: -16px 12px 0; padding: 24px 18px 32px; }
     }
 
+    /* ── Closed Card Banner ────────────────────────────────────────────── */
+    .closed-card-banner {
+      background: #fef2f2;
+      border: 1.5px solid #fecaca;
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .closed-card-icon {
+      width: 38px; height: 38px;
+      background: #fee2e2;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .closed-card-text h3 {
+      font-size: 14px; font-weight: 700;
+      color: #991b1b;
+      margin-bottom: 4px;
+    }
+    .closed-card-text p {
+      font-size: 12.5px;
+      color: #b91c1c;
+      line-height: 1.55;
+    }
+
     /* ── Section Title ─────────────────────────────────────────────────── */
     .section-label {
       font-size: 11px; font-weight: 600; letter-spacing: .08em;
@@ -109,7 +176,6 @@
       border-radius: var(--radius);
       font-family: inherit; font-size: 14px;
       color: var(--navy);
-      transition: border-color .2s, box-shadow .2s;
       outline: none;
       background: var(--white);
       appearance: none;
@@ -118,17 +184,11 @@
       background-repeat: no-repeat;
       background-position: right 12px center;
       padding-right: 36px;
-      cursor: pointer;
+      cursor: not-allowed;
+      opacity: .55;
     }
     .field select option { color: var(--navy); }
     .field select option[value=""] { color: var(--gray); }
-    .field input:focus,
-    .field select:focus {
-      border-color: var(--gold);
-      box-shadow: 0 0 0 3px rgba(201,151,44,.14);
-    }
-    .field input.error,
-    .field select.error { border-color: var(--danger); }
 
     /* ── Dynamic Row (dosen / skema) ───────────────────────────────────── */
     .dynamic-list { display: flex; flex-direction: column; gap: 10px; }
@@ -143,18 +203,15 @@
       border-radius: var(--radius);
       padding: 10px 12px;
     }
-    .dosen-row .row-num {
-      display: none; /* hidden, only for accessibility */
-    }
     .dosen-row input {
       padding: 8px 10px;
       border: 1.5px solid var(--gray-lt);
       border-radius: 6px;
       font-family: inherit; font-size: 13px;
       outline: none; background: var(--white);
-      transition: border-color .2s;
+      opacity: .55;
+      cursor: not-allowed;
     }
-    .dosen-row input:focus { border-color: var(--gold); }
     .dosen-row input::placeholder { color: #9ca3af; font-size: 12px; }
 
     .skema-row {
@@ -169,33 +226,31 @@
       border-radius: var(--radius);
       font-family: inherit; font-size: 14px;
       outline: none; width: 100%;
-      transition: border-color .2s;
+      opacity: .55;
+      cursor: not-allowed;
     }
-    .skema-row input:focus { border-color: var(--gold); }
 
     /* ── Buttons ───────────────────────────────────────────────────────── */
     .btn-remove {
       width: 30px; height: 30px; border-radius: 50%;
       border: 1.5px solid #fecaca;
       background: #fff5f5; color: var(--danger);
-      font-size: 16px; cursor: pointer;
+      font-size: 16px; cursor: not-allowed;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
-      transition: background .15s;
+      opacity: .4;
     }
-    .btn-remove:hover { background: #fee2e2; }
-    .btn-remove:disabled { opacity: .3; cursor: not-allowed; }
 
     .btn-add {
       margin-top: 8px;
-      border: 1.5px dashed var(--gold);
-      background: transparent; color: var(--gold);
+      border: 1.5px dashed var(--gray-lt);
+      background: transparent; color: var(--gray);
       padding: 8px 16px; border-radius: var(--radius);
       font-family: inherit; font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: background .15s;
+      cursor: not-allowed;
       display: inline-flex; align-items: center; gap: 6px;
+      opacity: .5;
     }
-    .btn-add:hover { background: rgba(201,151,44,.07); }
 
     .btn-ref {
       display: inline-flex; align-items: center; gap: 6px;
@@ -213,64 +268,30 @@
 
     .btn-submit {
       margin-top: 30px; width: 100%;
-      background: var(--navy); color: var(--white);
+      background: #9ca3af;
+      color: var(--white);
       border: none; border-radius: var(--radius);
       padding: 14px; font-family: inherit;
-      font-size: 15px; font-weight: 600; cursor: pointer;
+      font-size: 15px; font-weight: 600;
+      cursor: not-allowed;
       display: flex; align-items: center; justify-content: center; gap: 8px;
-      transition: background .2s, transform .1s;
+      opacity: .65;
     }
-    .btn-submit:hover { background: #162f4f; }
-    .btn-submit:active { transform: scale(.98); }
-    .btn-submit:disabled { opacity: .6; cursor: not-allowed; }
-
-    /* ── Alert / Toast ─────────────────────────────────────────────────── */
-    .alert {
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      font-size: 13px; line-height: 1.5;
-      margin-top: 16px; display: none;
-    }
-    .alert.show { display: block; }
-    .alert.danger { background: #fef2f2; border: 1px solid #fecaca; color: var(--danger); }
-    .alert.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: var(--success); }
-    .alert ul { padding-left: 18px; margin-top: 4px; }
 
     /* ── Hint text ─────────────────────────────────────────────────────── */
     .hint { font-size: 11.5px; color: var(--gray); margin-top: 4px; }
-
-    /* ── Spinner ───────────────────────────────────────────────────────── */
-    .spinner {
-      width: 18px; height: 18px;
-      border: 2.5px solid rgba(255,255,255,.4);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      display: none;
-    }
-    .btn-submit.loading .spinner { display: block; }
-    .btn-submit.loading .btn-text { opacity: .7; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Success State ─────────────────────────────────────────────────── */
-    .success-screen {
-      display: none; text-align: center; padding: 20px 0;
-    }
-    .success-screen.show { display: block; }
-    .success-icon {
-      width: 64px; height: 64px; border-radius: 50%;
-      background: #dcfce7; color: var(--success);
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 20px; font-size: 28px;
-    }
-    .success-screen h2 {
-      font-family: 'Playfair Display', serif; font-size: 22px;
-      margin-bottom: 10px;
-    }
-    .success-screen p { font-size: 14px; color: var(--gray); }
   </style>
 </head>
 <body>
+
+<!-- ── Closed Notice Bar ───────────────────────────────────────────────────── -->
+<div class="closed-notice" role="alert" aria-live="polite">
+  <span class="closed-icon" aria-hidden="true">🔒</span>
+  <div class="closed-notice-wrap">
+    <span>Pendaftaran Telah Ditutup</span>
+    <span class="closed-sub">Formulir registrasi tidak lagi menerima pendaftaran baru.</span>
+  </div>
+</div>
 
 <!-- ── Banner ──────────────────────────────────────────────────────────────── -->
 <div class="banner">
@@ -286,14 +307,16 @@
 <!-- ── Card ────────────────────────────────────────────────────────────────── -->
 <div class="card">
 
-  <!-- Success screen (hidden by default) -->
-  <div class="success-screen" id="successScreen">
-    <div class="success-icon">✓</div>
-    <h2>Pendaftaran Berhasil!</h2>
-    <p>Data Anda telah tersimpan. Terima kasih telah mendaftar Workshop Penyusunan Skema Kompetensi.</p>
+  <!-- Closed card banner -->
+  <div class="closed-card-banner" role="alert">
+    <div class="closed-card-icon" aria-hidden="true">⛔</div>
+    <div class="closed-card-text">
+      <h3>Periode Pendaftaran Sudah Berakhir</h3>
+      <p>Formulir registrasi Workshop Penyusunan Skema Kompetensi telah ditutup. Seluruh kolom isian dan tombol pengiriman tidak dapat digunakan. Hubungi panitia untuk informasi lebih lanjut.</p>
+    </div>
   </div>
 
-  <!-- Form -->
+  <!-- Form (read-only display) -->
   <div id="formWrapper">
 
     <!-- ── A. Data Kaprodi ─────────────────────────────────────────────── -->
@@ -301,17 +324,17 @@
 
     <div class="field">
       <label>Nama Lengkap Kaprodi <span class="req">*</span></label>
-      <input type="text" id="namaKaprodi" placeholder="cth. Dr. Andi Baso, S.T., M.T." />
+      <input type="text" id="namaKaprodi" placeholder="cth. Dr. Andi Baso, S.T., M.T." disabled />
     </div>
 
     <div class="field">
       <label>Nomor HP (WhatsApp) <span class="req">*</span></label>
-      <input type="tel" id="noHp" placeholder="cth. 08123456789" />
+      <input type="tel" id="noHp" placeholder="cth. 08123456789" disabled />
     </div>
 
     <div class="field">
       <label>Program Studi <span class="req">*</span></label>
-      <select id="prodi">
+      <select id="prodi" disabled>
         <option value="">-- Pilih Program Studi --</option>
         <optgroup label="Fakultas Pertanian & Kelautan">
           <option>Budidaya Perairan</option>
@@ -361,7 +384,7 @@
 
     <div class="dynamic-list" id="dosenList"></div>
 
-    <button class="btn-add" type="button" onclick="tambahDosen()">
+    <button class="btn-add" type="button" disabled>
       + Tambah Dosen
     </button>
 
@@ -379,176 +402,40 @@
 
     <div class="dynamic-list" id="skemaList" style="margin-top:14px;"></div>
 
-    <button class="btn-add" type="button" onclick="tambahSkema()">
+    <button class="btn-add" type="button" disabled>
       + Tambah Skema
     </button>
 
-    <!-- ── Alert & Submit ─────────────────────────────────────────────── -->
-    <div class="alert danger" id="alertError"></div>
-
-    <button class="btn-submit" id="btnSubmit" type="button" onclick="submitForm()">
-      <span class="spinner"></span>
-      <span class="btn-text">Kirim Pendaftaran</span>
+    <!-- ── Submit ─────────────────────────────────────────────────────── -->
+    <button class="btn-submit" type="button" disabled>
+      🔒 &nbsp;Pendaftaran Telah Ditutup
     </button>
 
   </div><!-- /formWrapper -->
 </div><!-- /card -->
 
 <script>
-  // ── Init ──────────────────────────────────────────────────────────────────
-  let dosenCount = 0;
-  let skemaCount = 0;
-
   function init() {
-    tambahDosen(); tambahDosen();   // minimal 2
-    tambahSkema(); tambahSkema();   // minimal 2
-  }
+    const dosenList = document.getElementById('dosenList');
+    const skemaList = document.getElementById('skemaList');
 
-  // ── Dosen ─────────────────────────────────────────────────────────────────
-  function tambahDosen() {
-    dosenCount++;
-    const id = dosenCount;
-    const list = document.getElementById('dosenList');
-    const row = document.createElement('div');
-    row.className = 'dosen-row';
-    row.id = `dosenRow${id}`;
-    row.innerHTML = `
-      <input type="text"  id="dosenNama${id}" placeholder="Nama Dosen ${id}" />
-      <input type="tel"   id="dosenHp${id}"   placeholder="No. HP / WA" />
-      <button class="btn-remove" type="button"
-        onclick="hapusDosen(${id})" title="Hapus baris ini">×</button>
-    `;
-    list.appendChild(row);
-    updateRemoveButtons('dosenList', 'dosenRow', 2);
-  }
+    for (let i = 1; i <= 2; i++) {
+      const dr = document.createElement('div');
+      dr.className = 'dosen-row';
+      dr.innerHTML = `
+        <input type="text" placeholder="Nama Dosen ${i}" disabled />
+        <input type="tel"  placeholder="No. HP / WA" disabled />
+        <button class="btn-remove" type="button" disabled>×</button>
+      `;
+      dosenList.appendChild(dr);
 
-  function hapusDosen(id) {
-    const row = document.getElementById(`dosenRow${id}`);
-    if (row) row.remove();
-    updateRemoveButtons('dosenList', 'dosenRow', 2);
-  }
-
-  // ── Skema ─────────────────────────────────────────────────────────────────
-  function tambahSkema() {
-    skemaCount++;
-    const id = skemaCount;
-    const list = document.getElementById('skemaList');
-    const row = document.createElement('div');
-    row.className = 'skema-row';
-    row.id = `skemaRow${id}`;
-    row.innerHTML = `
-      <input type="text" id="skema${id}"
-        placeholder="cth. SKKNI Nomor ... Bidang Teknologi Informasi" />
-      <button class="btn-remove" type="button"
-        onclick="hapusSkema(${id})" title="Hapus baris ini">×</button>
-    `;
-    list.appendChild(row);
-    updateRemoveButtons('skemaList', 'skemaRow', 2);
-  }
-
-  function hapusSkema(id) {
-    const row = document.getElementById(`skemaRow${id}`);
-    if (row) row.remove();
-    updateRemoveButtons('skemaList', 'skemaRow', 2);
-  }
-
-  // ── Disable remove jika hanya tersisa minimal ─────────────────────────────
-  function updateRemoveButtons(listId, rowPrefix, minCount) {
-    const list = document.getElementById(listId);
-    const rows = list.querySelectorAll(`[id^="${rowPrefix}"]`);
-    rows.forEach(row => {
-      const btn = row.querySelector('.btn-remove');
-      if (btn) btn.disabled = rows.length <= minCount;
-    });
-  }
-
-  // ── Collect data ──────────────────────────────────────────────────────────
-  function collectDosen() {
-    const list = document.getElementById('dosenList');
-    const rows = list.querySelectorAll('.dosen-row');
-    const result = [];
-    rows.forEach(row => {
-      const inputs = row.querySelectorAll('input');
-      const nama = (inputs[0]?.value || '').trim();
-      const hp   = (inputs[1]?.value || '').trim();
-      if (nama) result.push({ nama, hp });
-    });
-    return result;
-  }
-
-  function collectSkema() {
-    const list = document.getElementById('skemaList');
-    const rows = list.querySelectorAll('.skema-row');
-    const result = [];
-    rows.forEach(row => {
-      const val = (row.querySelector('input')?.value || '').trim();
-      if (val) result.push(val);
-    });
-    return result;
-  }
-
-  // ── Submit ────────────────────────────────────────────────────────────────
-  async function submitForm() {
-    const btn = document.getElementById('btnSubmit');
-    const alertEl = document.getElementById('alertError');
-
-    // hide previous alert
-    alertEl.className = 'alert';
-    alertEl.innerHTML = '';
-
-    const payload = {
-      nama_kaprodi: document.getElementById('namaKaprodi').value.trim(),
-      no_hp:        document.getElementById('noHp').value.trim(),
-      prodi:        document.getElementById('prodi').value,
-      dosen:        collectDosen(),
-      skema:        collectSkema(),
-    };
-
-    // Simple front-end pre-check
-    const preErrors = [];
-    if (!payload.nama_kaprodi) preErrors.push('Nama Lengkap Kaprodi wajib diisi.');
-    if (!payload.no_hp)        preErrors.push('Nomor HP wajib diisi.');
-    if (!payload.prodi)        preErrors.push('Program Studi wajib diisi.');
-    if (payload.dosen.length < 2) preErrors.push('Minimal 2 dosen yang diusulkan harus diisi (nama tidak boleh kosong).');
-    if (payload.skema.length < 2) preErrors.push('Minimal 2 judul skema harus diisi.');
-
-    if (preErrors.length) {
-      alertEl.className = 'alert danger show';
-      alertEl.innerHTML = '<strong>Mohon lengkapi data berikut:</strong><ul>' +
-        preErrors.map(e => `<li>${e}</li>`).join('') + '</ul>';
-      alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      return;
-    }
-
-    // Loading state
-    btn.disabled = true;
-    btn.classList.add('loading');
-    btn.querySelector('.btn-text').textContent = 'Mengirim...';
-
-    try {
-      const res = await fetch('/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const json = await res.json();
-
-      if (json.success) {
-        document.getElementById('formWrapper').style.display = 'none';
-        document.getElementById('successScreen').classList.add('show');
-      } else {
-        alertEl.className = 'alert danger show';
-        const errs = json.errors || ['Terjadi kesalahan. Coba lagi.'];
-        alertEl.innerHTML = '<strong>Gagal menyimpan:</strong><ul>' +
-          errs.map(e => `<li>${e}</li>`).join('') + '</ul>';
-      }
-    } catch (err) {
-      alertEl.className = 'alert danger show';
-      alertEl.innerHTML = 'Gagal terhubung ke server. Periksa koneksi Anda.';
-    } finally {
-      btn.disabled = false;
-      btn.classList.remove('loading');
-      btn.querySelector('.btn-text').textContent = 'Kirim Pendaftaran';
+      const sr = document.createElement('div');
+      sr.className = 'skema-row';
+      sr.innerHTML = `
+        <input type="text" placeholder="cth. SKKNI Nomor ... Bidang Teknologi Informasi" disabled />
+        <button class="btn-remove" type="button" disabled>×</button>
+      `;
+      skemaList.appendChild(sr);
     }
   }
 
