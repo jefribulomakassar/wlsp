@@ -391,7 +391,7 @@ HTML = """<!DOCTYPE html>
       </svg>
       <div class="wa-text">
         <span class="wa-label">Grup WhatsApp</span>
-        <span class="wa-desc">Klik untuk bergabung dengan Grup <strong>Skema Kompetensi</strong></span>
+        <span class="wa-desc">Klik untuk bergabung dengan Grup <strong>Skema Kompetensi UNIBOS</strong></span>
       </div>
       <svg class="wa-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </a>
