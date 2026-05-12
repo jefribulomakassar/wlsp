@@ -16,9 +16,11 @@ SCOPES = [
     "https://www.googleapis.com/auth/drive",
 ]
 
-SPREADSHEET_ID_1     = os.environ.get("SPREADSHEET_ID", "")
-SPREADSHEET_ID_2     = os.environ.get("SPREADSHEET_ID_2", "")
-SERVICE_ACCOUNT_JSON = os.environ.get("SERVICE_ACCOUNT_JSON", "")
+# Bug Fix #1: Dua SPREADSHEET_ID — isi keduanya di environment variable
+SPREADSHEET_ID_1     = os.environ.get("SPREADSHEET_ID", "")         # sheet utama (tetap pakai key lama)
+SPREADSHEET_ID_2     = os.environ.get("SPREADSHEET_ID_2", "")        # sheet kedua (tambahan)
+
+SERVICE_ACCOUNT_JSON = os.environ.get("SERVICE_ACCOUNT_JSON", "")   # JSON string di env var
 SHEET_NAME           = os.environ.get("SHEET_NAME", "Registrasi")
 
 HEADER = [
@@ -30,10 +32,11 @@ HEADER = [
     "Judul Skema",
 ]
 
-FALLBACK_CSV = "/tmp/data_registrasi.csv"
+FALLBACK_CSV = "/tmp/data_registrasi.csv"   # /tmp adalah satu-satunya writable di Vercel
 
 
 def get_credentials():
+    """Buat credentials sekali, dipakai untuk koneksi ke kedua sheet."""
     if SERVICE_ACCOUNT_JSON:
         info = json.loads(SERVICE_ACCOUNT_JSON)
         return Credentials.from_service_account_info(info, scopes=SCOPES)
@@ -51,7 +54,13 @@ def ensure_header(sheet):
         sheet.insert_row(HEADER, 1)
 
 
+# ── Bug Fix #2: Format kolom jadi human-readable ──────────────────────────────
+
 def format_dosen(dosen_list: list) -> str:
+    """
+    Input : [{"nama": "Andi Baso", "hp": "081234"}, {"nama": "Budi", "hp": "089876"}]
+    Output: "Andi Baso (081234) | Budi (089876)"
+    """
     parts = []
     for d in dosen_list:
         nama = (d.get("nama") or "").strip()
@@ -64,10 +73,17 @@ def format_dosen(dosen_list: list) -> str:
 
 
 def format_skema(skema_list: list) -> str:
+    """
+    Input : ["SKKNI Bidang TI", "SKKNI Bidang Pertanian"]
+    Output: "SKKNI Bidang TI | SKKNI Bidang Pertanian"
+    """
     return " | ".join(s.strip() for s in skema_list if s.strip())
 
 
+# ── Simpan ke sheet (single spreadsheet) ─────────────────────────────────────
+
 def save_to_one_sheet(spreadsheet_id: str, row: list) -> bool:
+    """Simpan satu baris ke spreadsheet tertentu. Return True jika berhasil."""
     if not spreadsheet_id:
         logging.warning("[Google Sheets] SPREADSHEET_ID kosong, dilewati.")
         return False
@@ -82,8 +98,13 @@ def save_to_one_sheet(spreadsheet_id: str, row: list) -> bool:
 
 
 def save_to_sheets(row: list) -> bool:
+    """
+    Bug Fix #1: Simpan ke DUA spreadsheet.
+    Return True jika minimal salah satu berhasil.
+    """
     ok1 = save_to_one_sheet(SPREADSHEET_ID_1, row)
     ok2 = save_to_one_sheet(SPREADSHEET_ID_2, row)
+
     if ok1 and ok2:
         logging.info("[Google Sheets] Berhasil disimpan ke kedua sheet.")
     elif ok1:
@@ -92,6 +113,7 @@ def save_to_sheets(row: list) -> bool:
         logging.warning("[Google Sheets] Hanya berhasil ke sheet 2.")
     else:
         logging.error("[Google Sheets] Gagal ke semua sheet.")
+
     return ok1 or ok2
 
 
@@ -105,7 +127,7 @@ def save_to_csv(row: list):
     logging.info(f"[CSV Fallback] Disimpan ke {FALLBACK_CSV}")
 
 
-# ── HTML ──────────────────────────────────────────────────────────────────────
+# ── HTML (inline karena Vercel Python tidak serve static folder) ──────────────
 HTML = """<!DOCTYPE html>
 <html lang="id">
 <head>
@@ -137,34 +159,6 @@ HTML = """<!DOCTYPE html>
       min-height: 100vh;
       padding: 0 0 60px;
     }
-
-    /* ── Closed Notice Bar ─────────────────────────────────────────────── */
-    .closed-notice {
-      background: #7f1d1d;
-      color: #fff;
-      text-align: center;
-      padding: 14px 24px;
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: .01em;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    .closed-notice-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-    }
-    .closed-notice .closed-sub {
-      font-weight: 400;
-      opacity: .85;
-      font-size: 12.5px;
-    }
-
-    /* ── Banner ────────────────────────────────────────────────────────── */
     .banner {
       background: var(--navy);
       color: var(--white);
@@ -191,7 +185,6 @@ HTML = """<!DOCTYPE html>
     .banner h1 span { color: var(--gold-lt); }
     .banner p { font-size: 13px; opacity: .75; line-height: 1.6; max-width: 560px; margin: 0 auto; }
 
-    /* ── Card ──────────────────────────────────────────────────────────── */
     .card {
       background: var(--white);
       border-radius: var(--radius);
@@ -205,38 +198,6 @@ HTML = """<!DOCTYPE html>
       .card { margin: -16px 12px 0; padding: 24px 18px 32px; }
     }
 
-    /* ── Closed Card Banner ────────────────────────────────────────────── */
-    .closed-card-banner {
-      background: #fef2f2;
-      border: 1.5px solid #fecaca;
-      border-radius: var(--radius);
-      padding: 16px 20px;
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      margin-bottom: 28px;
-    }
-    .closed-card-icon {
-      width: 38px; height: 38px;
-      background: #fee2e2;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-    .closed-card-text h3 {
-      font-size: 14px; font-weight: 700;
-      color: #991b1b;
-      margin-bottom: 4px;
-    }
-    .closed-card-text p {
-      font-size: 12.5px;
-      color: #b91c1c;
-      line-height: 1.55;
-    }
-
-    /* ── Section Label ─────────────────────────────────────────────────── */
     .section-label {
       font-size: 11px; font-weight: 600; letter-spacing: .08em;
       text-transform: uppercase; color: var(--gold);
@@ -245,7 +206,6 @@ HTML = """<!DOCTYPE html>
     }
     .section-label::after { content: ''; flex: 1; height: 1px; background: var(--gray-lt); }
 
-    /* ── Field ─────────────────────────────────────────────────────────── */
     .field { margin-bottom: 18px; }
     .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--navy); }
     .field label .req { color: var(--danger); margin-left: 2px; }
@@ -257,18 +217,21 @@ HTML = """<!DOCTYPE html>
       border-radius: var(--radius);
       font-family: inherit; font-size: 14px;
       color: var(--navy);
+      transition: border-color .2s, box-shadow .2s;
       outline: none; background: var(--white);
+    }
+    .field select {
       appearance: none; -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
       background-repeat: no-repeat; background-position: right 12px center;
-      padding-right: 36px;
-      cursor: not-allowed;
-      opacity: .55;
+      padding-right: 36px; cursor: pointer;
     }
-    .field select option { color: var(--navy); }
-    .field select option[value=""] { color: var(--gray); }
+    .field input:focus, .field select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(201,151,44,.14);
+    }
+    .field input.error, .field select.error { border-color: var(--danger); }
 
-    /* ── Dynamic rows ──────────────────────────────────────────────────── */
     .dynamic-list { display: flex; flex-direction: column; gap: 10px; }
 
     .dosen-row {
@@ -280,36 +243,39 @@ HTML = """<!DOCTYPE html>
     .dosen-row input {
       padding: 8px 10px; border: 1.5px solid var(--gray-lt);
       border-radius: 6px; font-family: inherit; font-size: 13px;
-      outline: none; background: var(--white);
-      opacity: .55; cursor: not-allowed;
+      outline: none; background: var(--white); transition: border-color .2s;
     }
+    .dosen-row input:focus { border-color: var(--gold); }
     .dosen-row input::placeholder { color: #9ca3af; font-size: 12px; }
 
     .skema-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
     .skema-row input {
       padding: 10px 14px; border: 1.5px solid var(--gray-lt);
       border-radius: var(--radius); font-family: inherit; font-size: 14px;
-      outline: none; width: 100%;
-      opacity: .55; cursor: not-allowed;
+      outline: none; width: 100%; transition: border-color .2s;
     }
+    .skema-row input:focus { border-color: var(--gold); }
 
-    /* ── Buttons ───────────────────────────────────────────────────────── */
     .btn-remove {
       width: 30px; height: 30px; border-radius: 50%;
       border: 1.5px solid #fecaca; background: #fff5f5; color: var(--danger);
-      font-size: 16px; cursor: not-allowed;
+      font-size: 16px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; opacity: .4;
+      flex-shrink: 0; transition: background .15s;
     }
+    .btn-remove:hover { background: #fee2e2; }
+    .btn-remove:disabled { opacity: .3; cursor: not-allowed; }
+
     .btn-add {
-      margin-top: 8px; border: 1.5px dashed var(--gray-lt);
-      background: transparent; color: var(--gray);
+      margin-top: 8px; border: 1.5px dashed var(--gold);
+      background: transparent; color: var(--gold);
       padding: 8px 16px; border-radius: var(--radius);
       font-family: inherit; font-size: 13px; font-weight: 600;
-      cursor: not-allowed;
+      cursor: pointer; transition: background .15s;
       display: inline-flex; align-items: center; gap: 6px;
-      opacity: .5;
     }
+    .btn-add:hover { background: rgba(201,151,44,.07); }
+
     .btn-ref {
       display: inline-flex; align-items: center; gap: 6px;
       margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--gold);
@@ -322,46 +288,76 @@ HTML = """<!DOCTYPE html>
 
     .btn-submit {
       margin-top: 30px; width: 100%;
-      background: #9ca3af; color: var(--white);
+      background: var(--navy); color: var(--white);
       border: none; border-radius: var(--radius);
       padding: 14px; font-family: inherit;
-      font-size: 15px; font-weight: 600; cursor: not-allowed;
+      font-size: 15px; font-weight: 600; cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 8px;
-      opacity: .65;
+      transition: background .2s, transform .1s;
     }
+    .btn-submit:hover { background: #162f4f; }
+    .btn-submit:active { transform: scale(.98); }
+    .btn-submit:disabled { opacity: .6; cursor: not-allowed; }
 
-    /* ── WA Banner ─────────────────────────────────────────────────────── */
+    .alert {
+      border-radius: var(--radius); padding: 14px 16px;
+      font-size: 13px; line-height: 1.5;
+      margin-top: 16px; display: none;
+    }
+    .alert.show { display: block; }
+    .alert.danger { background: #fef2f2; border: 1px solid #fecaca; color: var(--danger); }
+    .alert.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: var(--success); }
+    .alert ul { padding-left: 18px; margin-top: 4px; }
+
+    .hint { font-size: 11.5px; color: var(--gray); margin-top: 4px; }
+
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,.4);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin .7s linear infinite; display: none;
+    }
+    .btn-submit.loading .spinner { display: block; }
+    .btn-submit.loading .btn-text { opacity: .7; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .success-screen { display: none; text-align: center; padding: 20px 0; }
+    .success-screen.show { display: block; }
+    .success-icon {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: #dcfce7; color: var(--success);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px; font-size: 28px;
+    }
+    .success-screen h2 { font-family: 'Playfair Display', serif; font-size: 22px; margin-bottom: 10px; }
+    .success-screen p { font-size: 14px; color: var(--gray); }
+
+    /* WhatsApp group banner */
     .wa-banner {
       display: flex; align-items: center; gap: 14px;
-      background: #f0fdf4; border: 1.5px solid #86efac;
-      border-radius: var(--radius); padding: 14px 16px;
-      text-decoration: none; color: #15803d; margin-bottom: 24px;
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      text-decoration: none;
+      color: #15803d;
+      margin-bottom: 24px;
       transition: background .2s, border-color .2s, transform .1s;
     }
     .wa-banner:hover { background: #dcfce7; border-color: #4ade80; transform: translateY(-1px); }
     .wa-banner:active { transform: translateY(0); }
     .wa-icon { width: 36px; height: 36px; flex-shrink: 0; color: #16a34a; }
     .wa-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-    .wa-label { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #16a34a; opacity: .7; }
+    .wa-label {
+      font-size: 10px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: #16a34a; opacity: .7;
+    }
     .wa-desc { font-size: 13px; font-weight: 500; color: #15803d; line-height: 1.4; }
     .wa-desc strong { font-weight: 700; }
     .wa-arrow { width: 18px; height: 18px; flex-shrink: 0; opacity: .5; }
-
-    .hint { font-size: 11.5px; color: var(--gray); margin-top: 4px; }
   </style>
 </head>
 <body>
-
-<!-- ── Closed Notice Bar ───────────────────────────────────────────────────── -->
-<div class="closed-notice" role="alert">
-  <span style="font-size:16px;">🔒</span>
-  <div class="closed-notice-wrap">
-    <span>Pendaftaran Telah Ditutup</span>
-    <span class="closed-sub">Formulir registrasi tidak lagi menerima pendaftaran baru.</span>
-  </div>
-</div>
-
-<!-- ── Banner ──────────────────────────────────────────────────────────────── -->
 <div class="banner">
   <div class="banner-inner">
     <h1>Workshop Penyusunan<br/><span>Skema Kompetensi</span></h1>
@@ -369,23 +365,16 @@ HTML = """<!DOCTYPE html>
   </div>
 </div>
 
-<!-- ── Card ────────────────────────────────────────────────────────────────── -->
 <div class="card">
-
-  <!-- Closed card banner -->
-  <div class="closed-card-banner" role="alert">
-    <div class="closed-card-icon">&#9940;</div>
-    <div class="closed-card-text">
-      <h3>Periode Pendaftaran Sudah Berakhir</h3>
-      <p>Formulir registrasi Workshop Penyusunan Skema Kompetensi telah ditutup. Seluruh kolom isian dan tombol pengiriman tidak dapat digunakan. Hubungi panitia untuk informasi lebih lanjut.</p>
-    </div>
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">&#10003;</div>
+    <h2>Pendaftaran Berhasil!</h2>
+    <p>Data Anda telah tersimpan. Terima kasih telah mendaftar Workshop Penyusunan Skema Kompetensi.</p>
   </div>
 
   <div id="formWrapper">
-
-    <!-- WA Banner -->
     <a class="wa-banner" href="https://chat.whatsapp.com/HlANj8ZwqdbILXgD3clXOT" target="_blank" rel="noopener">
-      <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor">
+      <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
         <path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.14 1.543 5.876L.057 23.5l5.773-1.515A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.894a9.887 9.887 0 01-5.034-1.378l-.361-.214-3.427.899.915-3.342-.235-.374A9.861 9.861 0 012.106 12C2.106 6.58 6.58 2.106 12 2.106S21.894 6.58 21.894 12 17.42 21.894 12 21.894z"/>
       </svg>
@@ -396,20 +385,21 @@ HTML = """<!DOCTYPE html>
       <svg class="wa-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </a>
 
-    <!-- ── A. Data Kaprodi ─────────────────────────────────────────────── -->
     <div class="section-label">Data Kaprodi</div>
 
     <div class="field">
       <label>Nama Lengkap Kaprodi <span class="req">*</span></label>
-      <input type="text" placeholder="cth. Dr. Andi Baso, S.T., M.T." disabled />
+      <input type="text" id="namaKaprodi" placeholder="cth. Dr. Andi Baso, S.T., M.T." />
     </div>
+
     <div class="field">
       <label>Nomor HP (WhatsApp) <span class="req">*</span></label>
-      <input type="tel" placeholder="cth. 08123456789" disabled />
+      <input type="tel" id="noHp" placeholder="cth. 08123456789" />
     </div>
+
     <div class="field">
       <label>Program Studi <span class="req">*</span></label>
-      <select disabled>
+      <select id="prodi">
         <option value="">-- Pilih Program Studi --</option>
         <optgroup label="Fakultas Pertanian">
           <option>Budidaya Perairan</option>
@@ -454,12 +444,10 @@ HTML = """<!DOCTYPE html>
       </select>
     </div>
 
-    <!-- ── B. Dosen ─────────────────────────────────────────────────────── -->
     <div class="section-label">Dosen yang Diusulkan <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gray);font-size:11px;">(minimal 2 dosen)</span></div>
     <div class="dynamic-list" id="dosenList"></div>
-    <button class="btn-add" type="button" disabled>+ Tambah Dosen</button>
+    <button class="btn-add" type="button" onclick="tambahDosen()">+ Tambah Dosen</button>
 
-    <!-- ── C. Skema ─────────────────────────────────────────────────────── -->
     <div class="section-label">Judul Skema Kompetensi <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gray);font-size:11px;">(minimal 2 skema)</span></div>
     <p class="hint" style="margin-bottom:10px;">Sesuaikan judul skema dengan program studi dan kompetensi teknis dosen. Gunakan referensi SKKNI resmi:</p>
     <a class="btn-ref" href="https://skkni.kemnaker.go.id/" target="_blank" rel="noopener">
@@ -467,37 +455,138 @@ HTML = """<!DOCTYPE html>
       Buka SKKNI Kemnaker (tab baru)
     </a>
     <div class="dynamic-list" id="skemaList" style="margin-top:14px;"></div>
-    <button class="btn-add" type="button" disabled>+ Tambah Skema</button>
+    <button class="btn-add" type="button" onclick="tambahSkema()">+ Tambah Skema</button>
 
-    <!-- Submit -->
-    <button class="btn-submit" type="button" disabled>
-      &#128274;&nbsp; Pendaftaran Telah Ditutup
+    <div class="alert danger" id="alertError"></div>
+
+    <button class="btn-submit" id="btnSubmit" type="button" onclick="submitForm()">
+      <span class="spinner"></span>
+      <span class="btn-text">Kirim Pendaftaran</span>
     </button>
-
   </div>
 </div>
 
 <script>
-  function init() {
-    const dosenList = document.getElementById('dosenList');
-    const skemaList = document.getElementById('skemaList');
-    for (let i = 1; i <= 2; i++) {
-      const dr = document.createElement('div');
-      dr.className = 'dosen-row';
-      dr.innerHTML = `
-        <input type="text" placeholder="Nama Dosen ${i}" disabled />
-        <input type="tel"  placeholder="No. HP / WA" disabled />
-        <button class="btn-remove" type="button" disabled>&#215;</button>`;
-      dosenList.appendChild(dr);
+  let dosenCount = 0, skemaCount = 0;
 
-      const sr = document.createElement('div');
-      sr.className = 'skema-row';
-      sr.innerHTML = `
-        <input type="text" placeholder="cth. SKKNI Nomor ... Bidang Teknologi Informasi" disabled />
-        <button class="btn-remove" type="button" disabled>&#215;</button>`;
-      skemaList.appendChild(sr);
+  function init() {
+    tambahDosen(); tambahDosen();
+    tambahSkema(); tambahSkema();
+  }
+
+  function tambahDosen() {
+    dosenCount++;
+    const id = dosenCount;
+    const row = document.createElement('div');
+    row.className = 'dosen-row'; row.id = `dosenRow${id}`;
+    row.innerHTML = `
+      <input type="text" id="dosenNama${id}" placeholder="Nama Dosen ${id}" />
+      <input type="tel"  id="dosenHp${id}"   placeholder="No. HP / WA" />
+      <button class="btn-remove" type="button" onclick="hapusDosen(${id})" title="Hapus">&#215;</button>`;
+    document.getElementById('dosenList').appendChild(row);
+    updateRemoveButtons('dosenList', 'dosenRow', 2);
+  }
+
+  function hapusDosen(id) {
+    const row = document.getElementById(`dosenRow${id}`);
+    if (row) row.remove();
+    updateRemoveButtons('dosenList', 'dosenRow', 2);
+  }
+
+  function tambahSkema() {
+    skemaCount++;
+    const id = skemaCount;
+    const row = document.createElement('div');
+    row.className = 'skema-row'; row.id = `skemaRow${id}`;
+    row.innerHTML = `
+      <input type="text" id="skema${id}" placeholder="cth. SKKNI Nomor ... Bidang Teknologi Informasi" />
+      <button class="btn-remove" type="button" onclick="hapusSkema(${id})" title="Hapus">&#215;</button>`;
+    document.getElementById('skemaList').appendChild(row);
+    updateRemoveButtons('skemaList', 'skemaRow', 2);
+  }
+
+  function hapusSkema(id) {
+    const row = document.getElementById(`skemaRow${id}`);
+    if (row) row.remove();
+    updateRemoveButtons('skemaList', 'skemaRow', 2);
+  }
+
+  function updateRemoveButtons(listId, rowPrefix, minCount) {
+    const rows = document.getElementById(listId).querySelectorAll(`[id^="${rowPrefix}"]`);
+    rows.forEach(row => {
+      const btn = row.querySelector('.btn-remove');
+      if (btn) btn.disabled = rows.length <= minCount;
+    });
+  }
+
+  function collectDosen() {
+    return [...document.getElementById('dosenList').querySelectorAll('.dosen-row')]
+      .map(row => {
+        const inputs = row.querySelectorAll('input');
+        return { nama: (inputs[0]?.value||'').trim(), hp: (inputs[1]?.value||'').trim() };
+      }).filter(d => d.nama);
+  }
+
+  function collectSkema() {
+    return [...document.getElementById('skemaList').querySelectorAll('.skema-row input')]
+      .map(i => (i.value||'').trim()).filter(Boolean);
+  }
+
+  async function submitForm() {
+    const btn = document.getElementById('btnSubmit');
+    const alertEl = document.getElementById('alertError');
+    alertEl.className = 'alert'; alertEl.innerHTML = '';
+
+    const payload = {
+      nama_kaprodi: document.getElementById('namaKaprodi').value.trim(),
+      no_hp:        document.getElementById('noHp').value.trim(),
+      prodi:        document.getElementById('prodi').value,
+      dosen:        collectDosen(),
+      skema:        collectSkema(),
+    };
+
+    const preErrors = [];
+    if (!payload.nama_kaprodi) preErrors.push('Nama Lengkap Kaprodi wajib diisi.');
+    if (!payload.no_hp)        preErrors.push('Nomor HP wajib diisi.');
+    if (!payload.prodi)        preErrors.push('Program Studi wajib dipilih.');
+    if (payload.dosen.length < 2) preErrors.push('Minimal 2 dosen yang diusulkan harus diisi.');
+    if (payload.skema.length < 2) preErrors.push('Minimal 2 judul skema harus diisi.');
+
+    if (preErrors.length) {
+      alertEl.className = 'alert danger show';
+      alertEl.innerHTML = '<strong>Mohon lengkapi data berikut:</strong><ul>' +
+        preErrors.map(e => `<li>${e}</li>`).join('') + '</ul>';
+      alertEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+
+    btn.disabled = true; btn.classList.add('loading');
+    btn.querySelector('.btn-text').textContent = 'Mengirim...';
+
+    try {
+      const res = await fetch('/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (json.success) {
+        document.getElementById('formWrapper').style.display = 'none';
+        document.getElementById('successScreen').classList.add('show');
+      } else {
+        alertEl.className = 'alert danger show';
+        alertEl.innerHTML = '<strong>Gagal menyimpan:</strong><ul>' +
+          (json.errors||['Terjadi kesalahan.']).map(e => `<li>${e}</li>`).join('') + '</ul>';
+      }
+    } catch {
+      alertEl.className = 'alert danger show';
+      alertEl.innerHTML = 'Gagal terhubung ke server. Periksa koneksi Anda.';
+    } finally {
+      btn.disabled = false; btn.classList.remove('loading');
+      btn.querySelector('.btn-text').textContent = 'Kirim Pendaftaran';
     }
   }
+
   init();
 </script>
 </body>
@@ -537,15 +626,18 @@ def submit():
             return jsonify({"success": False, "errors": errors}), 422
 
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # Bug Fix #2: Format human-readable, bukan raw JSON string
         row = [
             timestamp,
             nama_kaprodi,
             no_hp,
             prodi,
-            format_dosen(dosen_valid),
-            format_skema(skema_valid),
+            format_dosen(dosen_valid),   # "Andi Baso (08123) | Budi (08987)"
+            format_skema(skema_valid),   # "SKKNI Bidang TI | SKKNI Bidang Pertanian"
         ]
 
+        # Bug Fix #1: Simpan ke kedua sheet
         saved = save_to_sheets(row)
         if not saved:
             save_to_csv(row)
@@ -561,5 +653,6 @@ def submit():
         return jsonify({"success": False, "errors": [str(e)]}), 500
 
 
+# Untuk local development
 if __name__ == "__main__":
     app.run(debug=True)
